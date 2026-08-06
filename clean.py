@@ -50,24 +50,29 @@ def clean(text):
     return s.strip()
 
 
-rows = []
-for name in SRC:
-    path = os.path.join(BASE, name)
-    if not os.path.exists(path):
-        continue
-    for line in open(path, encoding="utf-8"):
-        r = json.loads(line)
-        if r["source"].startswith("初中英语题库"):
-            r["source"] = "初中英语题库（7-9年级）"
-        r["question"] = clean(r["question"])[:6000]
-        r["answer"] = clean(r["answer"])[:3000]
-        r["explanation"] = clean(r["explanation"])[:8000]
-        if len(r["question"]) < 5:
+def main():
+    rows = []
+    for name in SRC:
+        path = os.path.join(BASE, name)
+        if not os.path.exists(path):
             continue
-        rows.append(r)
+        for line in open(path, encoding="utf-8"):
+            r = json.loads(line)
+            if r["source"].startswith("初中英语题库"):
+                r["source"] = "初中英语题库（7-9年级）"
+            r["question"] = clean(r["question"])[:6000]
+            r["answer"] = clean(r["answer"])[:3000]
+            r["explanation"] = clean(r["explanation"])[:8000]
+            if len(r["question"]) < 5:
+                continue
+            rows.append(r)
 
-out = os.path.join(BASE, "questions_clean.jsonl")
-with open(out, "w", encoding="utf-8") as f:
-    for r in rows:
-        f.write(json.dumps(r, ensure_ascii=False) + "\n")
-print(len(rows))
+    out = os.path.join(BASE, "questions_clean.jsonl")
+    with open(out, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    print(len(rows))
+
+
+if __name__ == "__main__":
+    main()
