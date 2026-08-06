@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>题库搜索 · 小学初中高中 各学科真题与练习</title>
+<meta name="description" content="覆盖小学、初中、高中各学科的开源题库搜索：关键词全文检索，按学段/学科/题型筛选，含答案与解析。">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .q-text{white-space:pre-wrap;word-break:break-word}
+  mark{background:#fef08a;padding:0 1px;border-radius:2px}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+<div class="max-w-4xl mx-auto px-4 py-6">
+  <header class="mb-5">
+    <h1 class="text-2xl font-extrabold tracking-tight">📚 题库搜索</h1>
+    <p class="text-sm text-slate-500 mt-1">小学 · 初中 · 高中 各学科 <span id="totalCnt"></span> 道题 · 关键词搜索 · 含答案与解析</p>
+  </header>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-4">
+    <div class="flex gap-2">
+      <input id="qInput" type="search" placeholder="输入关键词，如：二次函数、光合作用、鸦片战争…"
+        class="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button id="qBtn" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-sm font-medium">搜索</button>
+    </div>
+    <div class="mt-3 flex flex-wrap gap-2 items-center text-sm">
+      <select id="fStage" class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white">
+        <option value="">全部学段</option><option>小学</option><option>初中</option><option>高中</option>
+      </select>
+      <select id="fSubject" class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white">
+        <option value="">全部学科</option>
+      </select>
+      <select id="fType" class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white">
+        <option value="">全部题型</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="stats" class="text-sm text-slate-500 mb-2"></div>
+  <div id="results" class="space-y-3"></div>
+  <div id="pager" class="flex items-center justify-center gap-3 my-6 text-sm"></div>
+
+  <footer class="text-xs text-slate-400 mt-8 leading-relaxed">
+    数据来源：CMATH（小米，CC BY 4.0）· CJEval（初中十学科）· GAOKAO-Bench（2010-2022 高考真题）。
+    本站仅用于学习交流，题目版权归原数据集作者/出题机构所有。
+  </footer>
+</div>
+
+<dialog id="dlg" class="rounded-2xl p-0 w-full max-w-2xl backdrop:bg-black/40">
+  <div class="p-5">
+    <div class="flex items-start justify-between gap-3">
+      <div id="dlgMeta" class="text-xs text-slate-500"></div>
+      <button onclick="dlg.close()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+    </div>
+    <div id="dlgQ" class="q-text text-sm mt-3"></div>
+    <div class="mt-4">
+      <button id="ansBtn" class="text-sm text-blue-600 font-medium">显示答案与解析 ▾</button>
+      <div id="dlgA" class="hidden mt-2 space-y-2">
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm"><b>答案：</b><span id="ansText" class="q-text"></span></div>
+        <div id="expBox" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm"><b>解析：</b><div id="expText" class="q-text mt-1"></div></div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+let META=null, curPage=1;
+const $=id=>document.getElementById(id);
+
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function hl(s,q){
+  s=esc(s);
+  if(q) s=s.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'),'<mark>$&</mark>');
+  return s;
+}
+
+async function loadMeta(){
+  META=await (await fetch('/api/meta')).json();
+  const total=META.subjects.reduce((a,b)=>a+b.n,0);
+  $('totalCnt').textContent='共 '+total.toLocaleString();
+  $('fType').innerHTML='<option value="">全部题型</option>'+META.qtypes.map(t=>`<option>${esc(t.qtype)}</option>`).join('');
+  updateSubjects();
+}
+function updateSubjects(){
+  const stage=$('fStage').value;
+  const set=new Map();
+  META.subjects.filter(s=>!stage||s.stage===stage).forEach(s=>set.set(s.subject,(set.get(s.subject)||0)+s.n));
+  const cur=$('fSubject').value;
+  $('fSubject').innerHTML='<option value="">全部学科</option>'+[...set.entries()].map(([s,n])=>`<option value="${esc(s)}">${esc(s)}（${n.toLocaleString()}）</option>`).join('');
+  if([...set.keys()].includes(cur)) $('fSubject').value=cur;
+}
+
+function syncUrl(q,page){
+  const p=new URLSearchParams();
+  if(q)p.set('q',q);
+  if($('fStage').value)p.set('stage',$('fStage').value);
+  if($('fSubject').value)p.set('subject',$('fSubject').value);
+  if($('fType').value)p.set('qtype',$('fType').value);
+  if(page>1)p.set('page',page);
+  history.replaceState(null,'',p.toString()?('?'+p):location.pathname);
+}
+
+async function search(page=1){
+  curPage=page;
+  const q=$('qInput').value.trim();
+  syncUrl(q,page);
+  const p=new URLSearchParams({q,stage:$('fStage').value,subject:$('fSubject').value,qtype:$('fType').value,page});
+  $('stats').textContent='搜索中…';
+  const d=await (await fetch('/api/search?'+p)).json();
+  $('stats').textContent=`共 ${d.total.toLocaleString()} 条结果`+(q?`（关键词：${q}）`:'');
+  $('results').innerHTML=d.results.map(r=>`
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 cursor-pointer hover:border-blue-300" onclick="openQ(${r.id})">
+      <div class="flex flex-wrap gap-1.5 mb-2 text-xs">
+        <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">${esc(r.stage)}${r.grade?(' · '+esc(r.grade)):''}</span>
+        <span class="px-2 py-0.5 rounded-full bg-violet-50 text-violet-600">${esc(r.subject)}</span>
+        ${r.qtype?`<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${esc(r.qtype)}</span>`:''}
+        ${r.difficulty?`<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">${esc(r.difficulty)}</span>`:''}
+        <span class="px-2 py-0.5 rounded-full bg-slate-50 text-slate-400">${esc(r.source)}</span>
+      </div>
+      <div class="q-text text-sm text-slate-700">${hl(r.question,q)}${r.question.length>=300?'…':''}</div>
+      <div class="text-xs text-blue-500 mt-2">查看答案与解析 →</div>
+    </div>`).join('') || '<div class="text-center text-slate-400 py-10">没有找到相关题目，换个关键词试试</div>';
+  const pages=Math.ceil(d.total/d.per);
+  $('pager').innerHTML=pages>1?`
+    <button ${page<=1?'disabled':''} onclick="search(${page-1})" class="px-3 py-1.5 rounded-lg border bg-white disabled:opacity-40">上一页</button>
+    <span class="text-slate-500">${page} / ${Math.min(pages,500)}</span>
+    <button ${page>=pages?'disabled':''} onclick="search(${page+1})" class="px-3 py-1.5 rounded-lg border bg-white disabled:opacity-40">下一页</button>`:'';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function openQ(id){
+  const r=await (await fetch('/api/question?id='+id)).json();
+  $('dlgMeta').textContent=[r.stage,r.grade,r.subject,r.qtype,r.difficulty,r.source].filter(Boolean).join(' · ');
+  $('dlgQ').textContent=r.question;
+  $('ansText').textContent=r.answer||'（无）';
+  $('expText').textContent=r.explanation||'';
+  $('expBox').style.display=r.explanation?'':'none';
+  $('dlgA').classList.add('hidden');
+  $('ansBtn').textContent='显示答案与解析 ▾';
+  dlg.showModal();
+}
+$('ansBtn').addEventListener('click',()=>{
+  const h=$('dlgA').classList.toggle('hidden');
+  $('ansBtn').textContent=h?'显示答案与解析 ▾':'收起 ▴';
+});
+$('qBtn').addEventListener('click',()=>search(1));
+$('qInput').addEventListener('keydown',e=>{if(e.key==='Enter')search(1);});
+$('fStage').addEventListener('change',()=>{updateSubjects();search(1);});
+$('fSubject').addEventListener('change',()=>search(1));
+$('fType').addEventListener('change',()=>search(1));
+
+const U=new URLSearchParams(location.search);
+loadMeta().then(()=>{
+  if(U.get('q'))$('qInput').value=U.get('q');
+  if(U.get('stage')){$('fStage').value=U.get('stage');updateSubjects();}
+  if(U.get('subject'))$('fSubject').value=U.get('subject');
+  if(U.get('qtype'))$('fType').value=U.get('qtype');
+  search(parseInt(U.get('page')||'1',10));
+});
+</script>
+</body>
+</html>

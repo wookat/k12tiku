@@ -1,0 +1,4 @@
+sql/
+questions.jsonl
+load.log
+node_modules/

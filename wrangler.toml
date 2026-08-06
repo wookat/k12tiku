@@ -1,0 +1,8 @@
+name = "k12tiku"
+pages_build_output_dir = "web"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "k12tiku"
+database_id = "f10af997-668f-4c0d-8095-e3dfaf2e16b2"
