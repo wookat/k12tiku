@@ -5,6 +5,7 @@ export async function onRequestGet(context) {
   const stage = u.searchParams.get("stage") || "";
   const subject = u.searchParams.get("subject") || "";
   const qtype = u.searchParams.get("qtype") || "";
+  const fresh = u.searchParams.get("fresh") === "1";
   const page = Math.max(1, parseInt(u.searchParams.get("page") || "1", 10));
   const per = 20;
 
@@ -13,6 +14,7 @@ export async function onRequestGet(context) {
   if (stage) { conds.push("q.stage = ?"); binds.push(stage); }
   if (subject) { conds.push("q.subject = ?"); binds.push(subject); }
   if (qtype) { conds.push("q.qtype = ?"); binds.push(qtype); }
+  if (fresh) { conds.push("(q.source LIKE '%2023%' OR q.source LIKE '%2024%' OR q.source LIKE '%2025%' OR q.source LIKE '%2026%')"); }
 
   let from, order;
   if (q && q.length >= 3) {
@@ -27,7 +29,7 @@ export async function onRequestGet(context) {
     order = "ORDER BY q.id";
   } else {
     from = "q";
-    order = "ORDER BY q.id";
+    order = fresh ? "ORDER BY q.id DESC" : "ORDER BY q.id";
   }
   const where = conds.length ? "WHERE " + conds.join(" AND ") : "";
 

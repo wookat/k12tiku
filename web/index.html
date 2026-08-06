@@ -34,6 +34,9 @@
       <select id="fType" class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white">
         <option value="">全部题型</option>
       </select>
+      <label class="flex items-center gap-1.5 text-sm text-slate-600 ml-1">
+        <input type="checkbox" id="fFresh" class="accent-blue-600">只看新题（2023年及以后 / 最新模拟题）
+      </label>
     </div>
   </div>
 
@@ -42,7 +45,7 @@
   <div id="pager" class="flex items-center justify-center gap-3 my-6 text-sm"></div>
 
   <footer class="text-xs text-slate-400 mt-8 leading-relaxed">
-    数据来源：CMATH（小米，CC BY 4.0）· CJEval（初中十学科）· GAOKAO-Bench（2010-2022 高考真题）。
+    数据来源：CMATH（小米，CC BY 4.0）· CJEval（初中十学科）· GAOKAO-Bench / GAOKAO-Bench-Updates（2010-2024 高考真题）· LiveK12Bench（2026 年高中最新模拟/联考题）。
     本站仅用于学习交流，题目版权归原数据集作者/出题机构所有。
   </footer>
 </div>
@@ -97,6 +100,7 @@ function syncUrl(q,page){
   if($('fStage').value)p.set('stage',$('fStage').value);
   if($('fSubject').value)p.set('subject',$('fSubject').value);
   if($('fType').value)p.set('qtype',$('fType').value);
+  if($('fFresh').checked)p.set('fresh','1');
   if(page>1)p.set('page',page);
   history.replaceState(null,'',p.toString()?('?'+p):location.pathname);
 }
@@ -106,6 +110,7 @@ async function search(page=1){
   const q=$('qInput').value.trim();
   syncUrl(q,page);
   const p=new URLSearchParams({q,stage:$('fStage').value,subject:$('fSubject').value,qtype:$('fType').value,page});
+  if($('fFresh').checked)p.set('fresh','1');
   $('stats').textContent='搜索中…';
   const d=await (await fetch('/api/search?'+p)).json();
   $('stats').textContent=`共 ${d.total.toLocaleString()} 条结果`+(q?`（关键词：${q}）`:'');
@@ -149,6 +154,7 @@ $('qInput').addEventListener('keydown',e=>{if(e.key==='Enter')search(1);});
 $('fStage').addEventListener('change',()=>{updateSubjects();search(1);});
 $('fSubject').addEventListener('change',()=>search(1));
 $('fType').addEventListener('change',()=>search(1));
+$('fFresh').addEventListener('change',()=>search(1));
 
 const U=new URLSearchParams(location.search);
 loadMeta().then(()=>{
@@ -156,6 +162,7 @@ loadMeta().then(()=>{
   if(U.get('stage')){$('fStage').value=U.get('stage');updateSubjects();}
   if(U.get('subject'))$('fSubject').value=U.get('subject');
   if(U.get('qtype'))$('fType').value=U.get('qtype');
+  if(U.get('fresh')==='1')$('fFresh').checked=true;
   search(parseInt(U.get('page')||'1',10));
 });
 </script>
