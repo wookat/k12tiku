@@ -49,7 +49,7 @@ for path in sorted(glob.glob(os.path.join(root, "dataset", "grade*", "*.jsonl"))
             "difficulty": "", "question": question[:6000],
             "answer": "\n".join(answers)[:3000],
             "explanation": "\n".join(exps)[:8000],
-            "source": "初中英语题库 2025收录",
+            "source": "初中英语题库（7-9年级）",
         })
 
 out = os.path.join(BASE, "questions_ms_english.jsonl")
