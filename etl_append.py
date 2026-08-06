@@ -39,7 +39,7 @@ for path in sorted(glob.glob("/tmp/gbu/Data/*/*.json")):
     data = json.load(open(path, encoding="utf-8"))
     for e in data.get("example", []):
         year = e.get("year", "")
-        cat = e.get("category", "")
+        cat = _s(e.get("category", "")).split("\n")[0][:20]
         add("高中", subject, qtype, "", e.get("question", ""), e.get("answer", ""),
             e.get("analysis", ""), f"高考真题 {year} {cat}".strip())
 
