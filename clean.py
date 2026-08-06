@@ -12,6 +12,22 @@ IMG = re.compile(r"<img[^>]*>", re.I)
 OPT = re.compile(r"(?<!^)(?<![\n(（\w])\s*([A-D])[.．、]\s*(?=\S)")
 SPACES = re.compile(r"[ \t\u3000\xa0]+")
 BLANKLINES = re.compile(r"\n{3,}")
+STARTS_NEW = re.compile(r"^([A-D][.．、]|[(（]\d|\d+\s*[.．、]|[①-⑳]|【)")
+ENDS_LINE = re.compile(r'[。．.!?！？;；:：…”"】）)]$')
+CJK = re.compile(r"[\u3000-\u9fff\uff00-\uffef]")
+
+
+def join_wrapped(s):
+    """Merge hard line breaks that split a single sentence (PDF extraction)."""
+    out = []
+    for line in s.split("\n"):
+        if (out and out[-1] and line and not STARTS_NEW.match(line)
+                and not ENDS_LINE.search(out[-1])):
+            sep = "" if CJK.search(out[-1][-1]) and CJK.search(line[0]) else " "
+            out[-1] = out[-1] + sep + line
+        else:
+            out.append(line)
+    return "\n".join(out)
 
 
 def clean(text):
@@ -23,7 +39,8 @@ def clean(text):
     s = TAG.sub(lambda m: "\n" if m.group(0).lower().startswith(("</tr", "<br", "</p", "</div")) else " ", s)
     s = html.unescape(s)
     s = "\n".join(SPACES.sub(" ", line).strip() for line in s.split("\n"))
-    s = re.sub(r"\s+([，。；：？！、）】》])", r"\1", s)
+    s = re.sub(r"[ \t]+([，。；：？！、）】》．])", r"\1", s)
+    s = join_wrapped(s)
     s = re.sub(r"([（【《])\s+", r"\1", s)
     s = re.sub(r"选项\s*[:：]\s*", "\n", s)
     # put each multiple-choice option on its own line

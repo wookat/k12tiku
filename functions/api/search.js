@@ -1,3 +1,5 @@
+import { sourceCond } from "./_source.js";
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const u = new URL(request.url);
@@ -15,13 +17,8 @@ export async function onRequestGet(context) {
   if (stage) { conds.push("q.stage = ?"); binds.push(stage); }
   if (subject) { conds.push("q.subject = ?"); binds.push(subject); }
   if (qtype) { conds.push("q.qtype = ?"); binds.push(qtype); }
-  if (src === "fresh") {
-    conds.push("(q.source LIKE '%2023%' OR q.source LIKE '%2024%' OR q.source LIKE '%2025%' OR q.source LIKE '%2026%')");
-  } else if (src === "gaokao") {
-    conds.push("q.source LIKE '高考真题%'");
-  } else if (src === "mock") {
-    conds.push("(q.source LIKE '%模拟%' OR q.source LIKE '%联考%')");
-  }
+  const srcCond = sourceCond(src);
+  if (srcCond) conds.push(srcCond);
 
   let from, order;
   if (q && q.length >= 3) {

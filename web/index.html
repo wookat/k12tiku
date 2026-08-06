@@ -82,10 +82,15 @@ function hl(s,q){
 }
 
 async function loadMeta(){
-  META=await (await fetch('/api/meta')).json();
-  const total=META.subjects.reduce((a,b)=>a+b.n,0);
-  $('totalCnt').textContent='共 '+total.toLocaleString();
+  const src=$('fSrc').value;
+  META=await (await fetch('/api/meta'+(src?('?src='+src):''))).json();
+  if(!src){
+    const total=META.subjects.reduce((a,b)=>a+b.n,0);
+    $('totalCnt').textContent='共 '+total.toLocaleString();
+  }
+  const curT=$('fType').value;
   $('fType').innerHTML='<option value="">全部题型</option>'+META.qtypes.map(t=>`<option>${esc(t.qtype)}</option>`).join('');
+  if(META.qtypes.some(t=>t.qtype===curT))$('fType').value=curT;
   updateSubjects();
 }
 function updateSubjects(){
@@ -157,16 +162,16 @@ $('qInput').addEventListener('keydown',e=>{if(e.key==='Enter')search(1);});
 $('fStage').addEventListener('change',()=>{updateSubjects();search(1);});
 $('fSubject').addEventListener('change',()=>search(1));
 $('fType').addEventListener('change',()=>search(1));
-$('fSrc').addEventListener('change',()=>search(1));
+$('fSrc').addEventListener('change',async()=>{await loadMeta();search(1);});
 
 const U=new URLSearchParams(location.search);
+if(U.get('src'))$('fSrc').value=U.get('src');
+else if(U.get('fresh')==='1')$('fSrc').value='fresh';
 loadMeta().then(()=>{
   if(U.get('q'))$('qInput').value=U.get('q');
   if(U.get('stage')){$('fStage').value=U.get('stage');updateSubjects();}
   if(U.get('subject'))$('fSubject').value=U.get('subject');
   if(U.get('qtype'))$('fType').value=U.get('qtype');
-  if(U.get('src'))$('fSrc').value=U.get('src');
-  else if(U.get('fresh')==='1')$('fSrc').value='fresh';
   search(parseInt(U.get('page')||'1',10));
 });
 </script>
