@@ -49,7 +49,7 @@ for path in glob.glob("/tmp/cjeval/data/CJEval_data/*/*.json"):
 SUBJ = {"English": "英语", "Biology": "生物", "Chemistry": "化学", "Chinese": "语文",
         "Geography": "地理", "History": "历史", "Math": "数学", "Physics": "物理",
         "Political": "政治"}
-for path in glob.glob("/tmp/gaokao/Data/*/*.json"):
+for path in glob.glob("/tmp/gaokao/Data/*/*.json") + sorted(glob.glob("/tmp/gbu/Data/*/*.json")):
     name = os.path.basename(path)
     subject = next((v for k, v in SUBJ.items() if k in name), None)
     if not subject:
