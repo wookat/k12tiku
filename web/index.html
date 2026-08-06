@@ -87,6 +87,10 @@ async function loadMeta(){
   if(!src){
     const total=META.subjects.reduce((a,b)=>a+b.n,0);
     $('totalCnt').textContent='共 '+total.toLocaleString();
+  }else if(!$('totalCnt').textContent.trim()){
+    fetch('/api/meta').then(r=>r.json()).then(m=>{
+      $('totalCnt').textContent='共 '+m.subjects.reduce((a,b)=>a+b.n,0).toLocaleString();
+    });
   }
   const curT=$('fType').value;
   $('fType').innerHTML='<option value="">全部题型</option>'+META.qtypes.map(t=>`<option>${esc(t.qtype)}</option>`).join('');
