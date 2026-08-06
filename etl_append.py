@@ -13,7 +13,7 @@ def _s(v):
         return "\n".join(f"{k}: {_s(x)}" for k, x in v.items()).strip()
     if isinstance(v, (list, tuple)):
         return "\n".join(_s(x) for x in v).strip()
-    return str(v).strip()
+    return str(v).replace("\\n", "\n").strip()
 
 def add(stage, subject, qtype, difficulty, question, answer, explanation, source, grade=""):
     q = _s(question)
