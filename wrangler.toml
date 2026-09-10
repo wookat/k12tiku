@@ -5,4 +5,4 @@ compatibility_date = "2025-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "k12tiku"
-database_id = "f10af997-668f-4c0d-8095-e3dfaf2e16b2"
+database_id = "0b7a363a-b4f4-4db6-aeb0-d7ce75fba35a"

@@ -15,8 +15,8 @@ import urllib.request
 import clean as cleaner
 
 TOK = os.environ["CF"]
-ACC = "ddff52d24ee44e21a021c15eaffcc86d"
-DB = "f10af997-668f-4c0d-8095-e3dfaf2e16b2"
+ACC = "583090ace6fb9a02db3f2625487ed865"
+DB = "0b7a363a-b4f4-4db6-aeb0-d7ce75fba35a"
 URL = f"https://api.cloudflare.com/client/v4/accounts/{ACC}/d1/database/{DB}/query"
 PREFIX = ("INSERT OR IGNORE INTO q(id,stage,grade,subject,qtype,difficulty,"
           "question,answer,explanation,source) VALUES ")
