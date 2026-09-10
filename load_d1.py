@@ -5,8 +5,8 @@ Usage: CF=<api token> python3 load_d1.py questions_ms_english.jsonl [--no-fts]
 import json, os, sys, time, urllib.request, urllib.error
 
 TOK = os.environ["CF"]
-URL = ("https://api.cloudflare.com/client/v4/accounts/ddff52d24ee44e21a021c15eaffcc86d"
-       "/d1/database/f10af997-668f-4c0d-8095-e3dfaf2e16b2/query")
+URL = ("https://api.cloudflare.com/client/v4/accounts/583090ace6fb9a02db3f2625487ed865"
+       "/d1/database/0b7a363a-b4f4-4db6-aeb0-d7ce75fba35a/query")
 BASE = os.path.dirname(os.path.abspath(__file__))
 PREFIX = ("INSERT OR IGNORE INTO q(id,stage,grade,subject,qtype,difficulty,"
           "question,answer,explanation,source) VALUES ")
